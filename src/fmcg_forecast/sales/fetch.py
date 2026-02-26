@@ -1,4 +1,5 @@
 """Sales data loading and initial aggregation."""
+
 import logging
 from pathlib import Path
 

@@ -1,4 +1,5 @@
 """Tests for data loading utilities and sales fetch."""
+
 import pandas as pd
 import pytest
 
@@ -29,7 +30,9 @@ def test_load_sales_data(tmp_path):
     from fmcg_forecast.sales.fetch import load_sales_data
 
     csv = tmp_path / "sales.csv"
-    csv.write_text("date,id_region,id_gudang,sales,cogs\n2024-01-01,R-1,WH-A,1000,600\n")
+    csv.write_text(
+        "date,id_region,id_gudang,sales,cogs\n2024-01-01,R-1,WH-A,1000,600\n"
+    )
     df = load_sales_data(csv)
     assert len(df) == 1
     assert "sales" in df.columns

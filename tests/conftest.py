@@ -1,6 +1,5 @@
 """Shared fixtures for fmcg-demand-forecast tests."""
-import numpy as np
-import pandas as pd
+
 import pytest
 
 

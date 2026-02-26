@@ -3,6 +3,7 @@
 Handles OOS detection, outlier removal, calendar feature merging,
 and lag/rolling feature engineering — all without database dependencies.
 """
+
 import logging
 from datetime import date
 
@@ -42,10 +43,14 @@ def detect_oos_periods(
     is_zero = (df[sales_col] == 0).astype(int)
     # Label each consecutive zero run with a unique block id
     blocks = (is_zero.diff() != 0).cumsum()
-    zero_runs = df[is_zero == 1].groupby(blocks[is_zero == 1]).agg(
-        oos_start=(date_col, "min"),
-        oos_end=(date_col, "max"),
-        run_length=(date_col, "count"),
+    zero_runs = (
+        df[is_zero == 1]
+        .groupby(blocks[is_zero == 1])
+        .agg(
+            oos_start=(date_col, "min"),
+            oos_end=(date_col, "max"),
+            run_length=(date_col, "count"),
+        )
     )
     oos = zero_runs[zero_runs["run_length"] >= min_zero_days].reset_index(drop=True)
     logger.info("Detected %d OOS periods (min_zero_days=%d)", len(oos), min_zero_days)
@@ -143,5 +148,7 @@ def preprocess_demand_data(
     df.ffill(inplace=True)
     df.fillna(0, inplace=True)
 
-    logger.info("Preprocessed %d demand records with %d features", len(df), len(df.columns))
+    logger.info(
+        "Preprocessed %d demand records with %d features", len(df), len(df.columns)
+    )
     return df

@@ -1,4 +1,5 @@
 """Tests for FinancialForecaster (merged/aggregated sales and COGS)."""
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -22,8 +23,8 @@ def small_merged_df():
 def test_prepare_data_sales_returns_tensors(small_merged_df):
     import torch
 
-    from fmcg_forecast.sales.merged import FinancialForecaster
     from fmcg_forecast.config import SalesConfig
+    from fmcg_forecast.sales.merged import FinancialForecaster
 
     cfg = SalesConfig(epochs=2, input_window=7, forecast_horizon=5, batch_size=4)
     forecaster = FinancialForecaster(cfg, holiday_dates=set())
@@ -38,8 +39,8 @@ def test_prepare_data_sales_returns_tensors(small_merged_df):
 def test_prepare_data_cogs_uses_sales_feature(small_merged_df):
     import torch
 
-    from fmcg_forecast.sales.merged import FinancialForecaster
     from fmcg_forecast.config import SalesConfig
+    from fmcg_forecast.sales.merged import FinancialForecaster
 
     cfg = SalesConfig(epochs=2, input_window=7, forecast_horizon=5, batch_size=4)
     forecaster = FinancialForecaster(cfg, holiday_dates=set())
@@ -53,8 +54,8 @@ def test_prepare_data_cogs_uses_sales_feature(small_merged_df):
 
 @pytest.mark.slow
 def test_run_forecasting_returns_both_forecasts(small_merged_df):
-    from fmcg_forecast.sales.merged import FinancialForecaster
     from fmcg_forecast.config import SalesConfig
+    from fmcg_forecast.sales.merged import FinancialForecaster
 
     cfg = SalesConfig(epochs=2, input_window=7, forecast_horizon=5, batch_size=4)
     forecaster = FinancialForecaster(cfg, holiday_dates=set())
@@ -67,8 +68,8 @@ def test_run_forecasting_returns_both_forecasts(small_merged_df):
 
 @pytest.mark.slow
 def test_sales_forecast_is_positive(small_merged_df):
-    from fmcg_forecast.sales.merged import FinancialForecaster
     from fmcg_forecast.config import SalesConfig
+    from fmcg_forecast.sales.merged import FinancialForecaster
 
     cfg = SalesConfig(epochs=2, input_window=7, forecast_horizon=5, batch_size=4)
     forecaster = FinancialForecaster(cfg, holiday_dates=set())

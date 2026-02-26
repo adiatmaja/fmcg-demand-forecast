@@ -3,6 +3,7 @@
 Generates realistic sales data for Indonesian FMCG retail with
 seasonal patterns, stock-out events, and promotional effects.
 """
+
 import logging
 
 import numpy as np
@@ -86,9 +87,7 @@ def generate_orders(
     warehouses = [f"WH-{chr(65 + i)}" for i in range(num_warehouses)]
 
     # Pre-build lebaran lookup for fast access in inner loop
-    lebaran_lookup = [
-        pd.Timestamp(dt) for dt in FMCG_HOLIDAYS["idul_fitri"].values()
-    ]
+    lebaran_lookup = [pd.Timestamp(dt) for dt in FMCG_HOLIDAYS["idul_fitri"].values()]
 
     records = []
     for _, product in products.iterrows():
@@ -140,7 +139,9 @@ def generate_orders(
                         "category": product["category"],
                         "id_gudang": wh,
                         "main_product_sales": round(demand),
-                        "promo_sales": round(demand * 0.1) if product["is_promo"] else 0,
+                        "promo_sales": round(demand * 0.1)
+                        if product["is_promo"]
+                        else 0,
                         "prioritas_sales": round(demand * rng.uniform(0, 0.05)),
                         "is_payday_period": int(dt.day >= 25 or dt.day <= 5),
                     }

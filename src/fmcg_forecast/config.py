@@ -1,5 +1,4 @@
 """Configuration management using Pydantic Settings and YAML."""
-from pathlib import Path
 
 import yaml
 from pydantic import BaseModel
@@ -86,4 +85,5 @@ def load_yaml_config(path: str) -> dict:
         FileNotFoundError: If path does not exist.
     """
     with open(path) as f:
-        return yaml.safe_load(f)
+        result: dict = yaml.safe_load(f)
+    return result

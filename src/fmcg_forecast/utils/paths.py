@@ -1,4 +1,5 @@
 """Centralized path management for the forecasting pipeline."""
+
 from pathlib import Path
 
 

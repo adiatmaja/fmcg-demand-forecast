@@ -7,6 +7,7 @@ Contains:
 - SeasonalFinancialLSTMModel: LSTM + MultiheadAttention for individual sales
 - FinancialLSTMModel: Plain LSTM for merged sales/COGS forecasting
 """
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -88,8 +89,12 @@ class TimeSeriesLSTMAttentionModel(nn.Module):
         self.num_layers = num_layers
         lstm_input_dim = input_dim + product_embedding_dim + gudang_embedding_dim
 
-        self.product_embedding = nn.Embedding(num_product_embeddings, product_embedding_dim)
-        self.gudang_embedding = nn.Embedding(num_gudang_embeddings, gudang_embedding_dim)
+        self.product_embedding = nn.Embedding(
+            num_product_embeddings, product_embedding_dim
+        )
+        self.gudang_embedding = nn.Embedding(
+            num_gudang_embeddings, gudang_embedding_dim
+        )
         self.lstm = nn.LSTM(
             lstm_input_dim,
             hidden_dim,
@@ -122,15 +127,27 @@ class TimeSeriesLSTMAttentionModel(nn.Module):
         """
         embedded_prod = self.product_embedding(x_cat_product).squeeze(1)
         embedded_gudang = self.gudang_embedding(x_cat_gudang).squeeze(1)
-        embedded_prod_rep = embedded_prod.unsqueeze(1).repeat(1, x_continuous.size(1), 1)
-        embedded_gudang_rep = embedded_gudang.unsqueeze(1).repeat(1, x_continuous.size(1), 1)
-        x_combined = torch.cat([x_continuous, embedded_prod_rep, embedded_gudang_rep], dim=2)
+        embedded_prod_rep = embedded_prod.unsqueeze(1).repeat(
+            1, x_continuous.size(1), 1
+        )
+        embedded_gudang_rep = embedded_gudang.unsqueeze(1).repeat(
+            1, x_continuous.size(1), 1
+        )
+        x_combined = torch.cat(
+            [x_continuous, embedded_prod_rep, embedded_gudang_rep], dim=2
+        )
 
         h0 = torch.zeros(
-            self.num_layers * 2, x_combined.size(0), self.hidden_dim, device=x_combined.device
+            self.num_layers * 2,
+            x_combined.size(0),
+            self.hidden_dim,
+            device=x_combined.device,
         )
         c0 = torch.zeros(
-            self.num_layers * 2, x_combined.size(0), self.hidden_dim, device=x_combined.device
+            self.num_layers * 2,
+            x_combined.size(0),
+            self.hidden_dim,
+            device=x_combined.device,
         )
         out, _ = self.lstm(x_combined, (h0, c0))
         attention_weights = self.attention(out)
@@ -223,8 +240,12 @@ class FinancialLSTMModel(nn.Module):
         Returns:
             Output tensor (batch, output_dim).
         """
-        h0 = torch.zeros(self.lstm.num_layers, x.size(0), self.lstm.hidden_size, device=x.device)
-        c0 = torch.zeros(self.lstm.num_layers, x.size(0), self.lstm.hidden_size, device=x.device)
+        h0 = torch.zeros(
+            self.lstm.num_layers, x.size(0), self.lstm.hidden_size, device=x.device
+        )
+        c0 = torch.zeros(
+            self.lstm.num_layers, x.size(0), self.lstm.hidden_size, device=x.device
+        )
         out, _ = self.lstm(x, (h0, c0))
         out = self.dropout(out[:, -1, :])
         return self.fc(out)

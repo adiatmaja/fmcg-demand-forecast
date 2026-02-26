@@ -1,4 +1,5 @@
 """Run the full FMCG forecasting pipeline: data generation → demand → sales."""
+
 import argparse
 import logging
 import subprocess
@@ -7,12 +8,20 @@ from pathlib import Path
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run complete FMCG forecasting pipeline")
+    parser = argparse.ArgumentParser(
+        description="Run complete FMCG forecasting pipeline"
+    )
     parser.add_argument("--config", default="config/default.yaml")
-    parser.add_argument("--skip-generate", action="store_true", help="Skip data generation")
-    parser.add_argument("--skip-demand", action="store_true", help="Skip demand pipeline")
+    parser.add_argument(
+        "--skip-generate", action="store_true", help="Skip data generation"
+    )
+    parser.add_argument(
+        "--skip-demand", action="store_true", help="Skip demand pipeline"
+    )
     parser.add_argument("--skip-sales", action="store_true", help="Skip sales pipeline")
-    parser.add_argument("--sales-mode", choices=["individual", "merged", "both"], default="both")
+    parser.add_argument(
+        "--sales-mode", choices=["individual", "merged", "both"], default="both"
+    )
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -29,7 +38,9 @@ def main() -> None:
         logger.info("Running: %s", " ".join(cmd))
         result = subprocess.run(cmd, check=False)
         if result.returncode != 0:
-            logger.error("Script %s failed with return code %d", script, result.returncode)
+            logger.error(
+                "Script %s failed with return code %d", script, result.returncode
+            )
             sys.exit(result.returncode)
 
     if not args.skip_generate:

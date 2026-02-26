@@ -1,4 +1,5 @@
 """Tests for SeasonalFinancialForecaster (individual sales per region-warehouse)."""
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -32,8 +33,8 @@ def empty_holidays():
 
 @pytest.mark.unit
 def test_create_seasonal_features_shape(small_sales_df):
-    from fmcg_forecast.sales.individual import SeasonalFinancialForecaster
     from fmcg_forecast.config import SalesConfig
+    from fmcg_forecast.sales.individual import SeasonalFinancialForecaster
 
     cfg = SalesConfig(epochs=2, input_window=7, forecast_horizon=5, batch_size=4)
     forecaster = SeasonalFinancialForecaster(cfg, holiday_dates=set())
@@ -46,15 +47,17 @@ def test_create_seasonal_features_shape(small_sales_df):
 def test_prepare_data_returns_tensors(small_sales_df):
     import torch
 
-    from fmcg_forecast.sales.individual import SeasonalFinancialForecaster
     from fmcg_forecast.config import SalesConfig
+    from fmcg_forecast.sales.individual import SeasonalFinancialForecaster
 
     cfg = SalesConfig(epochs=2, input_window=7, forecast_horizon=5, batch_size=4)
     forecaster = SeasonalFinancialForecaster(cfg, holiday_dates=set())
     df_rg = small_sales_df[
         (small_sales_df["id_region"] == "R-1") & (small_sales_df["id_gudang"] == "WH-A")
     ].copy()
-    X, y, seasonal, _ = forecaster.prepare_data_with_seasonality(df_rg, "sales", "R-1", "WH-A")
+    X, y, seasonal, _ = forecaster.prepare_data_with_seasonality(
+        df_rg, "sales", "R-1", "WH-A"
+    )
     assert X is not None
     assert isinstance(X, torch.Tensor)
     assert isinstance(y, torch.Tensor)
@@ -63,8 +66,11 @@ def test_prepare_data_returns_tensors(small_sales_df):
 
 @pytest.mark.slow
 def test_run_forecasting_returns_results(small_sales_df, empty_holidays):
-    from fmcg_forecast.sales.individual import SeasonalFinancialForecaster, preprocess_raw_data
     from fmcg_forecast.config import SalesConfig
+    from fmcg_forecast.sales.individual import (
+        SeasonalFinancialForecaster,
+        preprocess_raw_data,
+    )
 
     cfg = SalesConfig(epochs=2, input_window=7, forecast_horizon=5, batch_size=4)
     data_dict = preprocess_raw_data(small_sales_df, holiday_dates=set())
@@ -75,8 +81,11 @@ def test_run_forecasting_returns_results(small_sales_df, empty_holidays):
 
 @pytest.mark.slow
 def test_forecast_output_has_expected_columns(small_sales_df):
-    from fmcg_forecast.sales.individual import SeasonalFinancialForecaster, preprocess_raw_data
     from fmcg_forecast.config import SalesConfig
+    from fmcg_forecast.sales.individual import (
+        SeasonalFinancialForecaster,
+        preprocess_raw_data,
+    )
 
     cfg = SalesConfig(epochs=2, input_window=7, forecast_horizon=5, batch_size=4)
     data_dict = preprocess_raw_data(small_sales_df, holiday_dates=set())

@@ -23,8 +23,8 @@ def small_demand_df():
 
 @pytest.mark.unit
 def test_create_features_adds_lag_columns(small_demand_df):
-    from fmcg_forecast.demand.forecaster import TimeSeriesForecaster
     from fmcg_forecast.config import DemandConfig
+    from fmcg_forecast.demand.forecaster import TimeSeriesForecaster
 
     cfg = DemandConfig(epochs=2, input_window=7, forecast_horizon=10, batch_size=4)
     forecaster = TimeSeriesForecaster(cfg)
@@ -37,9 +37,10 @@ def test_create_features_adds_lag_columns(small_demand_df):
 
 @pytest.mark.unit
 def test_prepare_data_returns_tensors(small_demand_df):
-    from fmcg_forecast.demand.forecaster import TimeSeriesForecaster
-    from fmcg_forecast.config import DemandConfig
     import torch
+
+    from fmcg_forecast.config import DemandConfig
+    from fmcg_forecast.demand.forecaster import TimeSeriesForecaster
 
     cfg = DemandConfig(epochs=2, input_window=7, forecast_horizon=10, batch_size=4)
     forecaster = TimeSeriesForecaster(cfg)
@@ -52,10 +53,12 @@ def test_prepare_data_returns_tensors(small_demand_df):
 
 @pytest.mark.slow
 def test_train_global_model_runs(small_demand_df):
-    from fmcg_forecast.demand.forecaster import TimeSeriesForecaster
     from fmcg_forecast.config import DemandConfig
+    from fmcg_forecast.demand.forecaster import TimeSeriesForecaster
 
-    cfg = DemandConfig(epochs=2, input_window=7, forecast_horizon=10, batch_size=4, cv_splits=2)
+    cfg = DemandConfig(
+        epochs=2, input_window=7, forecast_horizon=10, batch_size=4, cv_splits=2
+    )
     forecaster = TimeSeriesForecaster(cfg)
     forecaster.train_global_model(small_demand_df)
     assert forecaster.global_model is not None
@@ -63,10 +66,12 @@ def test_train_global_model_runs(small_demand_df):
 
 @pytest.mark.slow
 def test_predict_future_returns_dataframe(small_demand_df):
-    from fmcg_forecast.demand.forecaster import TimeSeriesForecaster
     from fmcg_forecast.config import DemandConfig
+    from fmcg_forecast.demand.forecaster import TimeSeriesForecaster
 
-    cfg = DemandConfig(epochs=2, input_window=7, forecast_horizon=10, batch_size=4, cv_splits=2)
+    cfg = DemandConfig(
+        epochs=2, input_window=7, forecast_horizon=10, batch_size=4, cv_splits=2
+    )
     forecaster = TimeSeriesForecaster(cfg)
     forecaster.train_global_model(small_demand_df)
     result = forecaster.predict_future(small_demand_df, "2024-05-01")

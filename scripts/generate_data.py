@@ -1,9 +1,14 @@
 """Generate synthetic FMCG data for demo and testing."""
+
 import argparse
 import logging
 
 from fmcg_forecast.data.calendar import create_feature_calendar
-from fmcg_forecast.data.generator import generate_orders, generate_products, generate_sales_data
+from fmcg_forecast.data.generator import (
+    generate_orders,
+    generate_products,
+    generate_sales_data,
+)
 from fmcg_forecast.utils.logging import setup_logger
 from fmcg_forecast.utils.paths import ensure_dirs, get_data_dirs
 

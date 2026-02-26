@@ -6,6 +6,7 @@ Wraps the shared TimeSeriesLSTMAttentionModel with:
 - MinMaxScaler normalization
 - Trend extrapolation for future predictions
 """
+
 import copy
 import logging
 from datetime import date, datetime
@@ -22,7 +23,10 @@ from statsmodels.tsa.seasonal import STL
 
 from fmcg_forecast.config import DemandConfig
 from fmcg_forecast.data.calendar import FMCG_HOLIDAYS
-from fmcg_forecast.models.lstm_attention import QuantileLoss, TimeSeriesLSTMAttentionModel
+from fmcg_forecast.models.lstm_attention import (
+    QuantileLoss,
+    TimeSeriesLSTMAttentionModel,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -79,7 +83,9 @@ class TimeSeriesForecaster:
         """
         path = Path(path)
         if not path.exists():
-            logger.warning("No model state found at %s — will train from scratch.", path)
+            logger.warning(
+                "No model state found at %s — will train from scratch.", path
+            )
             return False
         try:
             state = torch.load(path, map_location=self.device, weights_only=False)
@@ -149,10 +155,16 @@ class TimeSeriesForecaster:
         stl_period = 365 if len(processed) >= 730 else max(7, len(processed) // 4)
         if len(processed["main_product_sales"]) < 2 * stl_period:
             processed["trend"] = (
-                processed["main_product_sales"].rolling(window=7, center=True).mean().bfill().ffill()
+                processed["main_product_sales"]
+                .rolling(window=7, center=True)
+                .mean()
+                .bfill()
+                .ffill()
             )
         else:
-            res = STL(processed["main_product_sales"], period=stl_period, robust=True).fit()
+            res = STL(
+                processed["main_product_sales"], period=stl_period, robust=True
+            ).fit()
             processed["trend"] = res.trend
 
         processed["main_product_sales_detrended"] = (
@@ -181,7 +193,9 @@ class TimeSeriesForecaster:
                 processed[col] = 0
 
         scaler = MinMaxScaler()
-        processed[self.feature_names] = scaler.fit_transform(processed[self.feature_names])
+        processed[self.feature_names] = scaler.fit_transform(
+            processed[self.feature_names]
+        )
         self.scalers[unique_key] = scaler
 
         horizon = self.config.forecast_horizon
@@ -246,11 +260,18 @@ class TimeSeriesForecaster:
 
             model.eval()
             with torch.no_grad():
-                val_out = model(X_val, x_cat_prod_val.unsqueeze(1), x_cat_gudang_val.unsqueeze(1))
+                val_out = model(
+                    X_val, x_cat_prod_val.unsqueeze(1), x_cat_gudang_val.unsqueeze(1)
+                )
                 val_loss = criterion(val_out, y_val).item()
 
             if (epoch + 1) % 50 == 0 or epoch == 0:
-                logger.debug("Epoch %d/%d — val_loss=%.6f", epoch + 1, self.config.epochs, val_loss)
+                logger.debug(
+                    "Epoch %d/%d — val_loss=%.6f",
+                    epoch + 1,
+                    self.config.epochs,
+                    val_loss,
+                )
 
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
@@ -259,7 +280,11 @@ class TimeSeriesForecaster:
             else:
                 epochs_no_improve += 1
             if epochs_no_improve >= patience:
-                logger.info("Early stopping at epoch %d (best val_loss=%.6f)", epoch + 1, best_val_loss)
+                logger.info(
+                    "Early stopping at epoch %d (best val_loss=%.6f)",
+                    epoch + 1,
+                    best_val_loss,
+                )
                 break
 
         if best_state:
@@ -321,10 +346,14 @@ class TimeSeriesForecaster:
 
         self._train_single_fold(
             self.global_model,
-            X_global[train_idx], y_global[train_idx],
-            X_global[val_idx], y_global[val_idx],
-            cat_prod[train_idx], cat_prod[val_idx],
-            cat_gudang[train_idx], cat_gudang[val_idx],
+            X_global[train_idx],
+            y_global[train_idx],
+            X_global[val_idx],
+            y_global[val_idx],
+            cat_prod[train_idx],
+            cat_prod[val_idx],
+            cat_gudang[train_idx],
+            cat_gudang[val_idx],
         )
         logger.info("Global model training complete.")
 
@@ -343,7 +372,9 @@ class TimeSeriesForecaster:
             gudang_embedding_dim=mp.gudang_embedding_dim,
         ).to(self.device)
 
-    def predict_future(self, historical_df: pd.DataFrame, forecast_start_date: str) -> pd.DataFrame:
+    def predict_future(
+        self, historical_df: pd.DataFrame, forecast_start_date: str
+    ) -> pd.DataFrame:
         """Generate demand forecasts for all product-warehouse combinations.
 
         Args:
@@ -360,7 +391,9 @@ class TimeSeriesForecaster:
         self.global_model.eval()
         historical_df = historical_df.copy()
         historical_df["date"] = pd.to_datetime(historical_df["date"])
-        historical_df["main_product_sales"] = np.log1p(historical_df["main_product_sales"])
+        historical_df["main_product_sales"] = np.log1p(
+            historical_df["main_product_sales"]
+        )
 
         all_forecasts = []
         groups = list(historical_df.groupby(["product_name", "id_gudang"]))
@@ -371,8 +404,12 @@ class TimeSeriesForecaster:
             if key not in self.scalers:
                 continue
 
-            _, _, processed = self.prepare_data_for_series(grp.reset_index(drop=True), key)
-            last_window = processed.tail(self.config.input_window)[self.feature_names].values.copy()
+            _, _, processed = self.prepare_data_for_series(
+                grp.reset_index(drop=True), key
+            )
+            last_window = processed.tail(self.config.input_window)[
+                self.feature_names
+            ].values.copy()
             x_cont = torch.FloatTensor(last_window).unsqueeze(0).to(self.device)
 
             with torch.no_grad():
@@ -406,7 +443,11 @@ class TimeSeriesForecaster:
             )
 
         logger.info("Forecast generation complete.")
-        return pd.concat(all_forecasts, ignore_index=True) if all_forecasts else pd.DataFrame()
+        return (
+            pd.concat(all_forecasts, ignore_index=True)
+            if all_forecasts
+            else pd.DataFrame()
+        )
 
     def _extrapolate_trend(self, trend_series: pd.Series, horizon: int) -> np.ndarray:
         """Linear trend extrapolation for the forecast horizon."""
@@ -418,7 +459,9 @@ class TimeSeriesForecaster:
         coeffs = np.polyfit(x, y, 1)
         return np.polyval(coeffs, np.arange(recent, recent + horizon))
 
-    def _inverse_transform(self, series_scaled: np.ndarray, scaler: MinMaxScaler) -> np.ndarray:
+    def _inverse_transform(
+        self, series_scaled: np.ndarray, scaler: MinMaxScaler
+    ) -> np.ndarray:
         """Inverse-transform the first feature column."""
         placeholder = np.zeros((len(series_scaled), scaler.n_features_in_))
         placeholder[:, 0] = series_scaled.flatten()

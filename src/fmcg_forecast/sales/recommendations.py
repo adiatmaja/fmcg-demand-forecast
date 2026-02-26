@@ -8,6 +8,7 @@ Business logic (preserved exactly from yokulak-forecasting):
 2. Non-working day amounts redistributed to previous working days (60/40 split)
 3. Data integrity: total COGS == total recommended buy
 """
+
 import logging
 
 import numpy as np

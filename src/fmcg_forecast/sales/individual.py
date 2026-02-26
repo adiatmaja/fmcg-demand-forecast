@@ -3,6 +3,7 @@
 Rewrites yokulak-forecasting/sales/individual/forecasting.py without
 any MySQL/database dependencies.
 """
+
 import logging
 from datetime import timedelta
 
@@ -107,7 +108,12 @@ class SeasonalFinancialForecaster:
         metric: str,
         id_region: str,
         id_gudang: str,
-    ) -> tuple[torch.Tensor | None, torch.Tensor | None, torch.Tensor | None, pd.DataFrame | None]:
+    ) -> tuple[
+        torch.Tensor | None,
+        torch.Tensor | None,
+        torch.Tensor | None,
+        pd.DataFrame | None,
+    ]:
         """Prepare scaled sequences + seasonal features for one region-gudang pair.
 
         Args:
@@ -128,7 +134,10 @@ class SeasonalFinancialForecaster:
         if len(filtered) < min_len:
             logger.warning(
                 "Insufficient data for %s/%s: need %d, got %d",
-                id_region, id_gudang, min_len, len(filtered),
+                id_region,
+                id_gudang,
+                min_len,
+                len(filtered),
             )
             return None, None, None, None
 
@@ -196,7 +205,9 @@ class SeasonalFinancialForecaster:
         ).to(self.device)
 
         criterion = nn.MSELoss()
-        optimizer = optim.AdamW(model.parameters(), lr=self.config.model_params.learning_rate)
+        optimizer = optim.AdamW(
+            model.parameters(), lr=self.config.model_params.learning_rate
+        )
         scheduler = optim.lr_scheduler.ReduceLROnPlateau(
             optimizer, "min", patience=self.config.patience // 2, factor=0.5
         )
@@ -273,7 +284,9 @@ class SeasonalFinancialForecaster:
                 forecast_dates.append(current)
             current += timedelta(days=1)
 
-        last_seq_raw = df_historical.iloc[-self.config.input_window :][metric].values.reshape(-1, 1)
+        last_seq_raw = df_historical.iloc[-self.config.input_window :][
+            metric
+        ].values.reshape(-1, 1)
         last_seq_scaled = scaler.transform(last_seq_raw)
         current_seq = torch.FloatTensor(last_seq_scaled).unsqueeze(0).to(self.device)
 
@@ -331,6 +344,7 @@ class SeasonalFinancialForecaster:
                 if X is None:
                     continue
 
+                assert y is not None and seasonal is not None and processed is not None
                 self.train_model(X, y, seasonal, key)
                 forecast_df = self.generate_seasonal_forecast(
                     processed, metric, id_region, id_gudang

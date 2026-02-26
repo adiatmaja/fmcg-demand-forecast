@@ -6,6 +6,7 @@ any MySQL/database dependencies.
 COGS model depends sequentially on the sales forecast (uses predicted
 sales as an input feature during autoregressive generation).
 """
+
 import logging
 from datetime import timedelta
 
@@ -133,11 +134,13 @@ class FinancialForecaster:
         )
         df = self._add_day_of_week(df)
 
-        scaled_sales = self.scalers["sales_for_cogs"].fit_transform(df[["sales"]].values)
+        scaled_sales = self.scalers["sales_for_cogs"].fit_transform(
+            df[["sales"]].values
+        )
         scaled_cogs = self.scalers["cogs"].fit_transform(df[["cogs"]].values)
-        combined = np.hstack(
-            (scaled_sales, scaled_cogs, df[_DAY_COLS].values)
-        ).astype(np.float32)
+        combined = np.hstack((scaled_sales, scaled_cogs, df[_DAY_COLS].values)).astype(
+            np.float32
+        )
 
         X_list, y_list = [], []
         for i in range(len(combined) - self.config.input_window):
@@ -179,10 +182,14 @@ class FinancialForecaster:
         ).to(self.device)
 
         criterion = nn.MSELoss()
-        optimizer = optim.AdamW(model.parameters(), lr=self.config.model_params.learning_rate)
-        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, "min", patience=10, factor=0.5)
+        optimizer = optim.AdamW(
+            model.parameters(), lr=self.config.model_params.learning_rate
+        )
+        scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer, "min", patience=10, factor=0.5
+        )
 
-        for epoch in range(self.config.epochs):
+        for _epoch in range(self.config.epochs):
             model.train()
             optimizer.zero_grad()
             loss = criterion(model(X_tr), y_tr)
@@ -218,9 +225,13 @@ class FinancialForecaster:
         last_seq = df.iloc[-self.config.input_window :]
         last_sales_scaled = self.scalers["sales"].transform(last_seq[["sales"]].values)
         last_dow = last_seq[_DAY_COLS].values
-        current_seq = torch.FloatTensor(
-            np.hstack((last_sales_scaled, last_dow)).astype(np.float32)
-        ).unsqueeze(0).to(self.device)
+        current_seq = (
+            torch.FloatTensor(
+                np.hstack((last_sales_scaled, last_dow)).astype(np.float32)
+            )
+            .unsqueeze(0)
+            .to(self.device)
+        )
 
         # Collect forecast business days
         forecast_dates: list[pd.Timestamp] = []
@@ -236,17 +247,23 @@ class FinancialForecaster:
                 pred = model(current_seq)
                 preds_scaled.append(pred.item())
                 one_hot = self._get_one_hot_day(date)
-                new_row = np.array([pred.item()] + one_hot, dtype=np.float32).reshape(1, -1)
+                new_row = np.array([pred.item()] + one_hot, dtype=np.float32).reshape(
+                    1, -1
+                )
                 seq_np = current_seq.squeeze(0).cpu().numpy()
                 seq_np = np.vstack([seq_np[1:], new_row])
                 current_seq = torch.FloatTensor(seq_np).unsqueeze(0).to(self.device)
 
-        preds_orig = self.scalers["sales"].inverse_transform(
-            np.array(preds_scaled).reshape(-1, 1)
-        ).flatten()
+        preds_orig = (
+            self.scalers["sales"]
+            .inverse_transform(np.array(preds_scaled).reshape(-1, 1))
+            .flatten()
+        )
         preds_orig = np.clip(preds_orig, 0, None)
 
-        self.sales_forecast_df = pd.DataFrame({"date": forecast_dates, "sales": preds_orig})
+        self.sales_forecast_df = pd.DataFrame(
+            {"date": forecast_dates, "sales": preds_orig}
+        )
         return self.sales_forecast_df
 
     def generate_cogs_forecast(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -258,18 +275,28 @@ class FinancialForecaster:
         Returns:
             DataFrame with date and cogs forecast.
         """
-        assert self.sales_forecast_df is not None, "Sales forecast must be generated first"
+        assert self.sales_forecast_df is not None, (
+            "Sales forecast must be generated first"
+        )
         model = self.models["cogs"]
         assert model is not None, "COGS model not trained"
         model.eval()
 
         last_seq = df.iloc[-self.config.input_window :]
-        last_sales_scaled = self.scalers["sales_for_cogs"].transform(last_seq[["sales"]].values)
+        last_sales_scaled = self.scalers["sales_for_cogs"].transform(
+            last_seq[["sales"]].values
+        )
         last_cogs_scaled = self.scalers["cogs"].transform(last_seq[["cogs"]].values)
         last_dow = last_seq[_DAY_COLS].values
-        current_seq = torch.FloatTensor(
-            np.hstack((last_sales_scaled, last_cogs_scaled, last_dow)).astype(np.float32)
-        ).unsqueeze(0).to(self.device)
+        current_seq = (
+            torch.FloatTensor(
+                np.hstack((last_sales_scaled, last_cogs_scaled, last_dow)).astype(
+                    np.float32
+                )
+            )
+            .unsqueeze(0)
+            .to(self.device)
+        )
 
         forecast_dates = self.sales_forecast_df["date"].tolist()
         forecast_sales = self.sales_forecast_df["sales"].values
@@ -279,7 +306,9 @@ class FinancialForecaster:
             for i, date in enumerate(forecast_dates):
                 pred = model(current_seq)
                 preds_scaled.append(pred.item())
-                next_sales_s = self.scalers["sales_for_cogs"].transform([[forecast_sales[i]]])[0, 0]
+                next_sales_s = self.scalers["sales_for_cogs"].transform(
+                    [[forecast_sales[i]]]
+                )[0, 0]
                 one_hot = self._get_one_hot_day(date)
                 new_row = np.array(
                     [next_sales_s, pred.item()] + one_hot, dtype=np.float32
@@ -288,9 +317,11 @@ class FinancialForecaster:
                 seq_np = np.vstack([seq_np[1:], new_row])
                 current_seq = torch.FloatTensor(seq_np).unsqueeze(0).to(self.device)
 
-        preds_orig = self.scalers["cogs"].inverse_transform(
-            np.array(preds_scaled).reshape(-1, 1)
-        ).flatten()
+        preds_orig = (
+            self.scalers["cogs"]
+            .inverse_transform(np.array(preds_scaled).reshape(-1, 1))
+            .flatten()
+        )
         preds_orig = np.clip(preds_orig, 0, None)
 
         return pd.DataFrame({"date": forecast_dates, "cogs": preds_orig})
@@ -312,7 +343,11 @@ class FinancialForecaster:
             hist = data["historical_df"]
             fcst = data["forecast_df"]
             hist_mean = hist[metric].mean()
-            pct = ((fcst[metric].mean() - hist_mean) / hist_mean * 100) if hist_mean != 0 else 0.0
+            pct = (
+                ((fcst[metric].mean() - hist_mean) / hist_mean * 100)
+                if hist_mean != 0
+                else 0.0
+            )
             rows.append(
                 {
                     "metric": metric,
@@ -353,6 +388,7 @@ class FinancialForecaster:
         logger.info("Preparing and training sales model...")
         X_sales, y_sales, processed_sales = self.prepare_data_sales(sales_df)
         if X_sales is not None:
+            assert y_sales is not None
             self._train(X_sales, y_sales, "sales")
             sales_fc = self.generate_sales_forecast(processed_sales, forecast_start)
             results["sales"] = {
@@ -364,6 +400,7 @@ class FinancialForecaster:
         logger.info("Preparing and training COGS model...")
         X_cogs, y_cogs, processed_merged = self.prepare_data_cogs(sales_df, cogs_df)
         if X_cogs is not None and self.sales_forecast_df is not None:
+            assert y_cogs is not None
             self._train(X_cogs, y_cogs, "cogs")
             cogs_fc = self.generate_cogs_forecast(processed_merged)
             results["cogs"] = {

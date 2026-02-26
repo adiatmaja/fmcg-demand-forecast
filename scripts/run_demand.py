@@ -1,4 +1,5 @@
 """Run the demand forecasting pipeline."""
+
 import argparse
 import logging
 
@@ -17,7 +18,9 @@ def main() -> None:
         "--config", default="config/default.yaml", help="Path to YAML config"
     )
     parser.add_argument(
-        "--data", default=None, help="Path to input CSV (default: data/synthetic/sales.csv)"
+        "--data",
+        default=None,
+        help="Path to input CSV (default: data/synthetic/sales.csv)",
     )
     parser.add_argument(
         "--forecast-start", default=None, help="Forecast start date (YYYY-MM-DD)"

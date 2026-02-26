@@ -1,5 +1,4 @@
 import pytest
-from pathlib import Path
 
 
 @pytest.mark.unit
@@ -32,7 +31,7 @@ def test_get_data_dirs_with_custom_root(tmp_path):
 
 @pytest.mark.unit
 def test_ensure_dirs_creates_directories(tmp_path):
-    from fmcg_forecast.utils.paths import get_data_dirs, ensure_dirs
+    from fmcg_forecast.utils.paths import ensure_dirs, get_data_dirs
 
     dirs = get_data_dirs(project_root=tmp_path)
     ensure_dirs(dirs)

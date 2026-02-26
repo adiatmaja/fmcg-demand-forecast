@@ -1,4 +1,5 @@
 """Tests for the purchase recommendation engine."""
+
 import numpy as np
 import pandas as pd
 import pytest

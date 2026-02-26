@@ -53,6 +53,7 @@ class SalesConfig(BaseSettings):
     forecast_horizon: int = 90
     epochs: int = 200
     batch_size: int = 64
+    patience: int = 20
 
 
 class GeneratorConfig(BaseModel):
